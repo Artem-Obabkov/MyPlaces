@@ -13,6 +13,7 @@
 		8BB22DBA25B5FC2700B1AA2E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8BB22DB925B5FC2700B1AA2E /* Assets.xcassets */; };
 		8BB22DBD25B5FC2700B1AA2E /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 8BB22DBB25B5FC2700B1AA2E /* LaunchScreen.storyboard */; };
 		8BB22DCB25B5FD6D00B1AA2E /* MainTableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BB22DCA25B5FD6D00B1AA2E /* MainTableView.swift */; };
+		8BB22DCF25B7280100B1AA2E /* CustomCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BB22DCE25B7280100B1AA2E /* CustomCell.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -24,6 +25,7 @@
 		8BB22DBC25B5FC2700B1AA2E /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		8BB22DBE25B5FC2700B1AA2E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		8BB22DCA25B5FD6D00B1AA2E /* MainTableView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTableView.swift; sourceTree = "<group>"; };
+		8BB22DCE25B7280100B1AA2E /* CustomCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomCell.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -59,6 +61,7 @@
 				8BB22DB025B5FC2400B1AA2E /* AppDelegate.swift */,
 				8BB22DB225B5FC2400B1AA2E /* SceneDelegate.swift */,
 				8BB22DCA25B5FD6D00B1AA2E /* MainTableView.swift */,
+				8BB22DCE25B7280100B1AA2E /* CustomCell.swift */,
 				8BB22DB625B5FC2400B1AA2E /* Main.storyboard */,
 				8BB22DB925B5FC2700B1AA2E /* Assets.xcassets */,
 				8BB22DBB25B5FC2700B1AA2E /* LaunchScreen.storyboard */,
@@ -139,6 +142,7 @@
 			files = (
 				8BB22DCB25B5FD6D00B1AA2E /* MainTableView.swift in Sources */,
 				8BB22DB125B5FC2400B1AA2E /* AppDelegate.swift in Sources */,
+				8BB22DCF25B7280100B1AA2E /* CustomCell.swift in Sources */,
 				8BB22DB325B5FC2400B1AA2E /* SceneDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
