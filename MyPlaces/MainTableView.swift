@@ -32,11 +32,21 @@ class MainTableView: UITableViewController {
 
         cell.textLabel?.text = restaraunts[indexPath.row]
         cell.imageView?.image = UIImage(named: restaraunts[indexPath.row])
+        
+        cell.imageView?.layer.cornerRadius = cell.frame.height / 2 
+        cell.imageView?.clipsToBounds = true
 
         return cell
     }
     
-
+    
+    // MARK: Tabel View Delegate
+    
+    // Размер одной строки таблицы
+    override func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        return 85
+    }
+    
     /*
     // MARK: - Navigation
 
