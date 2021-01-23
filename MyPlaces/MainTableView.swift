@@ -9,11 +9,9 @@ import UIKit
 
 class MainTableView: UITableViewController {
 
-    let restaraunts = [
-        "Балкан Гриль", "Бочка", "Вкусные истории", "Speak Easy",
-        "Дастархан", "Индокитай", "Bonsai", "Burger Heroes", "Sherlock Holmes",
-        "Классик", "Шок", "Kitchen", "Love&Life", "Morris Pub", "X.O",
-    ]
+    
+    
+    var places = Place.getPlaces()
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -23,15 +21,27 @@ class MainTableView: UITableViewController {
     // MARK: - Table view data source
 
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return restaraunts.count
+        return places.count
     }
 
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "customCell", for: indexPath) as! CustomCell
-
-        cell.nameLabel.text = restaraunts[indexPath.row]
-        cell.imageOfPlace.image = UIImage(named: restaraunts[indexPath.row])
+        
+        // Упрощаем читабельность кода
+        let place = places[indexPath.row]
+        
+        cell.nameLabel.text = place.name
+        cell.locationLabel.text = place.location
+        cell.typeLabel.text = place.type
+        
+        // Данная конструкция позволяет определить, подставлять значение .image или значение .placeImage!. Если .image == nil, то подставляется изображение из второстепенного массива, если не nil, то подставляется само значение
+        if place.image == nil {
+            cell.imageOfPlace.image = UIImage(named: place.placeImage!)
+        } else {
+            cell.imageOfPlace.image = place.image
+        }
+        
         
         // Делаем изображение круглым
         cell.imageOfPlace.layer.cornerRadius = cell.imageOfPlace.frame.height / 2
@@ -43,11 +53,6 @@ class MainTableView: UITableViewController {
     
     // MARK: Tabel View Delegate
     
-    // Размер одной строки таблицы
-    override func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        return 85
-    }
-    
     /*
     // MARK: - Navigation
 
@@ -57,5 +62,14 @@ class MainTableView: UITableViewController {
         // Pass the selected object to the new view controller.
     }
     */
+    
+    // unwindSegue от второго экрана
+    
+    @IBAction func unwindSegue(_ segue: UIStoryboardSegue) {
+        guard let addNewPlaceVC = segue.source as? AddNewPlaceViewController else { return }
+        addNewPlaceVC.getValueOf()
+        places.append(addNewPlaceVC.newPlace!)
+        tableView.reloadData()
+    }
 
 }
