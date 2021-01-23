@@ -6,22 +6,25 @@
 //
 
 import UIKit
+import RealmSwift
 
 class MainTableView: UITableViewController {
 
-    
-    
-    var places = Place.getPlaces()
+    // Создаем экземпляр results с типом данных place. Он работает аналогично массиву
+    var places: Results<Place>!
     
     override func viewDidLoad() {
         super.viewDidLoad()
-
+        
+        // Отображаем сохраненные объекты в базе данных. Указываем Place.self, т.к нужно указать ИМЕННО тип 
+        places = realm.objects(Place.self)
+        
     }
 
     // MARK: - Table view data source
 
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return places.count
+        return places.isEmpty ? 0 : places.count
     }
 
     
@@ -30,19 +33,15 @@ class MainTableView: UITableViewController {
         
         // Упрощаем читабельность кода
         let place = places[indexPath.row]
-        
+
         cell.nameLabel.text = place.name
         cell.locationLabel.text = place.location
         cell.typeLabel.text = place.type
         
-        // Данная конструкция позволяет определить, подставлять значение .image или значение .placeImage!. Если .image == nil, то подставляется изображение из второстепенного массива, если не nil, то подставляется само значение
-        if place.image == nil {
-            cell.imageOfPlace.image = UIImage(named: place.placeImage!)
-        } else {
-            cell.imageOfPlace.image = place.image
-        }
+        // Конвентируем изображение
+        cell.imageOfPlace.image = UIImage(data: place.imageData!)
         
-        
+
         // Делаем изображение круглым
         cell.imageOfPlace.layer.cornerRadius = cell.imageOfPlace.frame.height / 2
         cell.imageOfPlace.clipsToBounds = true
@@ -67,8 +66,7 @@ class MainTableView: UITableViewController {
     
     @IBAction func unwindSegue(_ segue: UIStoryboardSegue) {
         guard let addNewPlaceVC = segue.source as? AddNewPlaceViewController else { return }
-        addNewPlaceVC.getValueOf()
-        places.append(addNewPlaceVC.newPlace!)
+        addNewPlaceVC.saveNewController()
         tableView.reloadData()
     }
 

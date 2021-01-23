@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 50;
+	objectVersion = 51;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -16,6 +16,7 @@
 		8BB22DCF25B7280100B1AA2E /* CustomCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BB22DCE25B7280100B1AA2E /* CustomCell.swift */; };
 		8BB22DD225B76B7A00B1AA2E /* PlacecModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BB22DD125B76B7A00B1AA2E /* PlacecModel.swift */; };
 		8BB22DD625B87D8600B1AA2E /* AddNewPlaceViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BB22DD525B87D8600B1AA2E /* AddNewPlaceViewController.swift */; };
+		8BB22DE225BC847300B1AA2E /* StorageManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BB22DE125BC847300B1AA2E /* StorageManager.swift */; };
 		E8D357C46AC6BE1C1B7F5852 /* Pods_MyPlaces.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EA2D0629536327CC402191DB /* Pods_MyPlaces.framework */; };
 /* End PBXBuildFile section */
 
@@ -31,6 +32,7 @@
 		8BB22DCE25B7280100B1AA2E /* CustomCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomCell.swift; sourceTree = "<group>"; };
 		8BB22DD125B76B7A00B1AA2E /* PlacecModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlacecModel.swift; sourceTree = "<group>"; };
 		8BB22DD525B87D8600B1AA2E /* AddNewPlaceViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddNewPlaceViewController.swift; sourceTree = "<group>"; };
+		8BB22DE125BC847300B1AA2E /* StorageManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageManager.swift; sourceTree = "<group>"; };
 		C97138C8766D70BF266415F0 /* Pods-MyPlaces.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MyPlaces.debug.xcconfig"; path = "Target Support Files/Pods-MyPlaces/Pods-MyPlaces.debug.xcconfig"; sourceTree = "<group>"; };
 		EA2D0629536327CC402191DB /* Pods_MyPlaces.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_MyPlaces.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		FCE20C2E4547343167BB15F7 /* Pods-MyPlaces.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MyPlaces.release.xcconfig"; path = "Target Support Files/Pods-MyPlaces/Pods-MyPlaces.release.xcconfig"; sourceTree = "<group>"; };
@@ -62,7 +64,6 @@
 				C97138C8766D70BF266415F0 /* Pods-MyPlaces.debug.xcconfig */,
 				FCE20C2E4547343167BB15F7 /* Pods-MyPlaces.release.xcconfig */,
 			);
-			name = Pods;
 			path = Pods;
 			sourceTree = "<group>";
 		};
@@ -93,6 +94,7 @@
 				8BB22DCE25B7280100B1AA2E /* CustomCell.swift */,
 				8BB22DD525B87D8600B1AA2E /* AddNewPlaceViewController.swift */,
 				8BB22DD125B76B7A00B1AA2E /* PlacecModel.swift */,
+				8BB22DE125BC847300B1AA2E /* StorageManager.swift */,
 				8BB22DB625B5FC2400B1AA2E /* Main.storyboard */,
 				8BB22DB925B5FC2700B1AA2E /* Assets.xcassets */,
 				8BB22DBB25B5FC2700B1AA2E /* LaunchScreen.storyboard */,
@@ -218,6 +220,7 @@
 				8BB22DCB25B5FD6D00B1AA2E /* MainTableView.swift in Sources */,
 				8BB22DD625B87D8600B1AA2E /* AddNewPlaceViewController.swift in Sources */,
 				8BB22DB125B5FC2400B1AA2E /* AppDelegate.swift in Sources */,
+				8BB22DE225BC847300B1AA2E /* StorageManager.swift in Sources */,
 				8BB22DCF25B7280100B1AA2E /* CustomCell.swift in Sources */,
 				8BB22DD225B76B7A00B1AA2E /* PlacecModel.swift in Sources */,
 				8BB22DB325B5FC2400B1AA2E /* SceneDelegate.swift in Sources */,

@@ -5,34 +5,24 @@
 //  Created by pro2017 on 19/01/2021.
 //
 
-import UIKit
+import RealmSwift
 
-struct Place {
+class Place: Object {
     
-    var name: String
-    var location: String?
-    var type: String?
-    var image: UIImage?
-    var placeImage: String?
+    @objc dynamic var name = ""
+    @objc dynamic var location: String?
+    @objc dynamic var type: String?
+    @objc dynamic var imageData: Data?
     
-    // Вспомогательная сортировка
+    // Создаем кастомный инициализатор. Такой тип инициализатора используется, когда в классе есть свойства со значением по умолчанию и свойства без значения
     
-    static let restaraunts = [
-        "Балкан Гриль", "Бочка", "Вкусные истории", "Speak Easy",
-        "Дастархан", "Индокитай", "Bonsai", "Burger Heroes", "Sherlock Holmes",
-        "Классик", "Шок", "Kitchen", "Love&Life", "Morris Pub", "X.O",
-    ]
-
-    static func getPlaces() -> [Place] {
-
-        var places = [Place]()
-
-        for place in restaraunts {
-            places.append(Place(name: place, location: "Минск", type: "Ресторан", placeImage: place))
-        }
-        
-        return places
-
+    convenience init(name: String, location: String?, type: String?, imageData: Data?) {
+        self.init()
+        self.name = name
+        self.location = location
+        self.type = type
+        self.imageData = imageData
     }
+    
     
 }

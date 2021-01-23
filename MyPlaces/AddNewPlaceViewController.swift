@@ -9,9 +9,6 @@ import UIKit
 
 class AddNewPlaceViewController: UITableViewController {
     
-    // Создаем экземпляр типа place
-    var newPlace: Place?
-    
     // Эта переменная будет использоваться для определения, было ли изображение измененно или нет
     var isImageChanged = false
     
@@ -90,7 +87,8 @@ class AddNewPlaceViewController: UITableViewController {
         
     }
     
-    func getValueOf() {
+    // Метод отвечает за присвоение значений к экземплару структуры, созданной в самом начале класса
+    func saveNewController() {
         
         // В зависимости от значения подставляем нужное изображение. Для удобства создана дополнительная переменная
         var image: UIImage?
@@ -101,9 +99,15 @@ class AddNewPlaceViewController: UITableViewController {
             image = #imageLiteral(resourceName: "imagePlaceholder")
         }
         
+        // Конвентируем изображение
+        let imageData = image?.pngData()
+        
         // В placeName.text мы можем указать force unwraping, т.к кнопка save работает только в том случае, когда в placeName есть хоть какое-нибудь значение
-        // В placeImage мы передаем nil, т.к он используется для временного решения с массивом в модели данных
-        newPlace = Place(name: placeName.text!, location: placeLocation.text, type: placeType.text, image: image, placeImage: nil)
+        // Создаем экземпляр типа place
+        let newPlace = Place(name: placeName.text!, location: placeLocation.text, type: placeType.text, imageData: imageData)
+        
+        // Сохраняем созданный экземпляр класса в базу данных
+        StorageManager.saveData(newPlace)
     }
 }
 
