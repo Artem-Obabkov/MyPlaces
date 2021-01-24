@@ -9,6 +9,9 @@ import UIKit
 
 class AddNewPlaceViewController: UITableViewController {
     
+    // Сюда будут передаваться данные при редактировании элементов
+    var editPlace: Place?
+    
     // Эта переменная будет использоваться для определения, было ли изображение измененно или нет
     var isImageChanged = false
     
@@ -32,6 +35,9 @@ class AddNewPlaceViewController: UITableViewController {
         
         // Позволяет следить за изменением определенного оутлета (в данном случае placeName) в реальном времени и применять какую-нибудь логику
         placeName.addTarget(self, action: #selector(textFieldChanged), for: .editingChanged)
+        
+        // Настраиваем экран редактирования
+        setupEditScreen()
         
     }
     
@@ -88,7 +94,7 @@ class AddNewPlaceViewController: UITableViewController {
     }
     
     // Метод отвечает за присвоение значений к экземплару структуры, созданной в самом начале класса
-    func saveNewController() {
+    func saveController() {
         
         // В зависимости от значения подставляем нужное изображение. Для удобства создана дополнительная переменная
         var image: UIImage?
@@ -106,8 +112,71 @@ class AddNewPlaceViewController: UITableViewController {
         // Создаем экземпляр типа place
         let newPlace = Place(name: placeName.text!, location: placeLocation.text, type: placeType.text, imageData: imageData)
         
-        // Сохраняем созданный экземпляр класса в базу данных
-        StorageManager.saveData(newPlace)
+        // Проверяем, мы находимся на экране редактировки или на экране добавления нового элемента
+        if editPlace != nil {
+            
+            
+            
+            try! realm.write {
+                editPlace?.name = newPlace.name
+                editPlace?.location = newPlace.location
+                editPlace?.type = newPlace.type
+                editPlace?.imageData = newPlace.imageData
+            }
+            
+            
+        } else {
+            // Сохраняем созданный экземпляр класса в базу данных
+            StorageManager.saveData(newPlace)
+        }
+        
+    }
+    
+    // Этот метод отвечает за присвоение значений переданной ячейки в нужные аутлеты
+    private func setupEditScreen() {
+        
+        // Проверяем editPlace, и если он не nil, то передаем все нужные значения
+        if editPlace != nil {
+            
+            // Указываем, что будет сохраняться то изображение, которое уже установленно
+            isImageChanged = true
+            
+            // Вызываем функцию редактирования navigationBar
+            tabBarEdit()
+            
+            // Конвентируем изображение из типа data обратно в UIImage
+            guard let imageData = editPlace?.imageData, let image = UIImage(data: imageData) else { return }
+            
+            
+            // Передаем значения во все необходимые оутлеты
+            placeName.text = editPlace?.name
+            placeLocation.text = editPlace?.location
+            placeType.text = editPlace?.type
+            
+            // Изменяем размер изображения, что бы оно нормально отображалось
+            placeImage.contentMode = .scaleAspectFill
+            placeImage.image = image
+            
+        }
+    }
+    
+    // Отвечает за настройку navigationBar
+    private func tabBarEdit() {
+        
+        // Убираем текст с кнопки возврата на My Places
+        if let topItem = navigationController?.navigationBar.topItem {
+            topItem.backBarButtonItem = UIBarButtonItem(title: "", style: .plain, target: nil, action: nil)
+        }
+        
+        // Убираем кнопку cancel
+        navigationItem.leftBarButtonItem = nil
+        
+        // Меняем название
+        title = editPlace?.name
+        
+        // Активируем кнопку save
+        saveButton.isEnabled = true
+        
     }
 }
 
