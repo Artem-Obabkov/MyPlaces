@@ -13,6 +13,8 @@ class Place: Object {
     @objc dynamic var location: String?
     @objc dynamic var type: String?
     @objc dynamic var imageData: Data?
+    // Отвечает за текущую дату
+    @objc dynamic var date = Date()
     
     // Создаем кастомный инициализатор. Такой тип инициализатора используется, когда в классе есть свойства со значением по умолчанию и свойства без значения
     

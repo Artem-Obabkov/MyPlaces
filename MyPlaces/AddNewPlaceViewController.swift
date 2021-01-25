@@ -178,6 +178,12 @@ class AddNewPlaceViewController: UITableViewController {
         saveButton.isEnabled = true
         
     }
+    
+    // Настройка кнопки cancel
+    @IBAction func cancelButton(_ sender: UIBarButtonItem) {
+        dismiss(animated: true)
+    }
+    
 }
 
 // MARK: Text Field Delegate

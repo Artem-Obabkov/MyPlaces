@@ -8,8 +8,19 @@
 import UIKit
 import RealmSwift
 
-class MainTableView: UITableViewController {
-
+class MainTableView: UIViewController, UITableViewDelegate, UITableViewDataSource {
+    
+    // Оутлеты для сортировки
+    @IBOutlet weak var segmentedControl: UISegmentedControl!
+    @IBOutlet weak var reverseButton: UIBarButtonItem!
+    
+    
+    // Вспомогательная переменная для сортировки в алфавитном порядке и обратно
+    var ascending = true
+    
+    
+    @IBOutlet weak var tableView: UITableView!
+    
     // Создаем экземпляр results с типом данных place. Он работает аналогично массиву
     var places: Results<Place>!
     
@@ -23,12 +34,12 @@ class MainTableView: UITableViewController {
 
     // MARK: - Table view data source
 
-    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return places.isEmpty ? 0 : places.count
     }
 
     
-    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "customCell", for: indexPath) as! CustomCell
         
         // Упрощаем читабельность кода
@@ -52,7 +63,7 @@ class MainTableView: UITableViewController {
     
     // MARK: Tabel View Delegate
     
-    override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
+    func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
         
         if editingStyle == .delete {
             
@@ -89,6 +100,42 @@ class MainTableView: UITableViewController {
         
     }
     
+    // Кнопка сортировки
+    @IBAction func reverseButtonAction(_ sender: UIBarButtonItem) {
+        
+        // Меняем значение вспомогательной переменной, отвечающей за сортировку в обратном порядке
+        ascending.toggle()
+        
+        if ascending {
+            reverseButton.image = #imageLiteral(resourceName: "AZ")
+        } else {
+            reverseButton.image = #imageLiteral(resourceName: "ZA")
+        }
+        
+        sorting()
+        
+    }
+    
+    // Segmented Control сортировка
+    @IBAction func segmentedControlAction(_ sender: UISegmentedControl) {
+        
+        sorting()
+        
+    }
+    
+    // Приватный метод, отвечающий за сортировку элементов
+    private func sorting() {
+        
+        // Проверяем индекс текущего элемента, и в зависимости от него применяем разные сортировки
+        if segmentedControl.selectedSegmentIndex == 0 {
+            places = places.sorted(byKeyPath: "date", ascending: ascending)
+        } else {
+            places = places.sorted(byKeyPath: "name", ascending: ascending)
+        }
+        
+        tableView.reloadData()
+        
+    }
     
     // unwindSegue от второго экрана
     
