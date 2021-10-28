@@ -19,20 +19,20 @@
 #ifndef REALM_GROUP_SHARED_HPP
 #define REALM_GROUP_SHARED_HPP
 
-#include <functional>
-#include <cstdint>
-#include <limits>
-#include <realm/util/features.h>
-#include <realm/util/thread.hpp>
-#include <realm/util/interprocess_condvar.hpp>
-#include <realm/util/interprocess_mutex.hpp>
+#include <realm/db_options.hpp>
 #include <realm/group.hpp>
 #include <realm/handover_defs.hpp>
 #include <realm/impl/transact_log.hpp>
 #include <realm/metrics/metrics.hpp>
 #include <realm/replication.hpp>
+#include <realm/util/features.h>
+#include <realm/util/interprocess_condvar.hpp>
+#include <realm/util/interprocess_mutex.hpp>
 #include <realm/version_id.hpp>
-#include <realm/db_options.hpp>
+
+#include <functional>
+#include <cstdint>
+#include <limits>
 
 namespace realm {
 
@@ -115,6 +115,8 @@ public:
     // file (or another file), a new DB object is needed.
     static DBRef create(const std::string& file, bool no_create = false, const DBOptions options = DBOptions());
     static DBRef create(Replication& repl, const DBOptions options = DBOptions());
+    static DBRef create(std::unique_ptr<Replication> repl, const DBOptions options = DBOptions());
+    static DBRef create(BinaryData, bool take_ownership = true);
 
     ~DB() noexcept;
 
@@ -158,6 +160,10 @@ public:
         m_replication = repl;
     }
 
+    const std::string& get_path() const
+    {
+        return m_db_path;
+    }
 
 #ifdef REALM_DEBUG
     /// Deprecated method, only called from a unit test
@@ -277,15 +283,11 @@ public:
     /// file will be unencrypted. Any other value will change the encryption of
     /// the file to the new 64 byte key.
     ///
-    /// FIXME: This function is not yet implemented in an exception-safe manner,
-    /// therefore, if it throws, the application should not attempt to
-    /// continue. If may not even be safe to destroy the DB object.
-    ///
-    /// WARNING / FIXME: compact() should NOT be exposed publicly on Windows
-    /// because it's not crash safe! It may corrupt your database if something fails
-    ///
     /// WARNING: Compact() is not thread-safe with respect to a concurrent close()
     bool compact(bool bump_version_number = false, util::Optional<const char*> output_encryption_key = util::none);
+
+    void write_copy(StringData path, util::Optional<const char*> output_encryption_key = util::none,
+                    bool allow_overwrite = false);
 
 #ifdef REALM_DEBUG
     void test_ringbuf();
@@ -349,7 +351,7 @@ public:
         return m_metrics;
     }
 
-    // Try to grab a exclusive lock of the given realm path's lock file. If the lock
+    // Try to grab an exclusive lock of the given realm path's lock file. If the lock
     // can be acquired, the callback will be executed with the lock and then return true.
     // Otherwise false will be returned directly.
     // The lock taken precludes races with other threads or processes accessing the
@@ -359,12 +361,41 @@ public:
     using CallbackWithLock = std::function<void(const std::string& realm_path)>;
     static bool call_with_lock(const std::string& realm_path, CallbackWithLock callback);
 
-    // Return a list of files/directories core may use of the given realm file path.
-    // The first element of the pair in the returned list is the path string, the
-    // second one is to indicate the path is a directory or not.
-    // The temporary files are not returned by this function.
-    // It is safe to delete those returned files/directories in the call_with_lock's callback.
-    static std::vector<std::pair<std::string, bool>> get_core_files(const std::string& realm_path);
+    enum CoreFileType : uint8_t {
+        Lock,
+        Storage,
+        Management,
+        Note,
+        Log,
+        LogA, // This is a legacy version of `Log`.
+        LogB, // This is a legacy version of `Log`.
+    };
+
+    /// Get the path for the given type of file for a base Realm file path.
+    /// \param realm_path The path for the main Realm file.
+    /// \param type The type of associated file to get the path for.
+    /// \return The base path with the appropriate type-specific suffix appended to it.
+    static std::string get_core_file(const std::string& realm_path, CoreFileType type);
+
+    /// Delete a Realm file and all associated control files.
+    ///
+    /// This function does not perform any locking and requires external
+    /// synchronization to ensure that it is safe to call. If called within
+    /// call_with_lock(), \p delete_lockfile must be false as the lockfile is not
+    /// safe to delete while it is in use.
+    ///
+    /// \param base_path The Realm file to delete, which auxiliary file paths will be derived from.
+    /// \param[out] did_delete_realm If non-null, will be set to true if the Realm file was deleted (even if a
+    ///             subsequent deletion failed)
+    /// \param delete_lockfile By default the lock file is not deleted as it is unsafe to
+    ///        do so. If this is true, the lock file is deleted along with the other files.
+    static void delete_files(const std::string& base_path, bool* did_delete_realm = nullptr,
+                             bool delete_lockfile = false);
+
+    /// Mark this DB as the sync agent for the file.
+    /// \throw MultipleSyncAgents if another DB is already the sync agent.
+    void claim_sync_agent();
+    void release_sync_agent();
 
 protected:
     explicit DB(const DBOptions& options); // Is this ever used?
@@ -373,6 +404,7 @@ private:
     std::recursive_mutex m_mutex;
     int m_transaction_count = 0;
     SlabAlloc m_alloc;
+    std::unique_ptr<Replication> m_history;
     Replication* m_replication = nullptr;
     struct SharedInfo;
     struct ReadCount;
@@ -381,6 +413,15 @@ private:
         uint_fast32_t m_reader_idx = 0;
         ref_type m_top_ref = 0;
         size_t m_file_size = 0;
+
+        // a little helper
+        static std::unique_ptr<ReadLockInfo> make_fake(ref_type top_ref, size_t file_size)
+        {
+            auto res = std::make_unique<ReadLockInfo>();
+            res->m_top_ref = top_ref;
+            res->m_file_size = file_size;
+            return res;
+        }
     };
     class ReadLockGuard;
 
@@ -388,12 +429,12 @@ private:
     size_t m_free_space = 0;
     size_t m_locked_space = 0;
     size_t m_used_space = 0;
-    uint_fast32_t m_local_max_entry = 0; // highest version observed by this DB
+    uint_fast32_t m_local_max_entry = 0;          // highest version observed by this DB
     std::vector<ReadLockInfo> m_local_locks_held; // tracks all read locks held by this DB
     util::File m_file;
-    util::File::Map<SharedInfo> m_file_map; // Never remapped, provides access to everything but the ringbuffer
+    util::File::Map<SharedInfo> m_file_map;   // Never remapped, provides access to everything but the ringbuffer
     util::File::Map<SharedInfo> m_reader_map; // provides access to ringbuffer, remapped as needed when it grows
-    bool m_wait_for_change_enabled = true; // Initially wait_for_change is enabled
+    bool m_wait_for_change_enabled = true;    // Initially wait_for_change is enabled
     bool m_write_transaction_open = false;
     std::string m_lockfile_path;
     std::string m_lockfile_prefix;
@@ -402,6 +443,7 @@ private:
     const char* m_key;
     int m_file_format_version = 0;
     util::InterprocessMutex m_writemutex;
+    std::unique_ptr<ReadLockInfo> m_fake_read_lock_if_immutable;
 #ifdef REALM_ASYNC_DAEMON
     util::InterprocessMutex m_balancemutex;
 #endif
@@ -414,8 +456,9 @@ private:
     util::InterprocessCondVar m_new_commit_available;
     util::InterprocessCondVar m_pick_next_writer;
     std::function<void(int, int)> m_upgrade_callback;
-
     std::shared_ptr<metrics::Metrics> m_metrics;
+    bool m_is_sync_agent = false;
+
     /// Attach this DB instance to the specified database file.
     ///
     /// While at least one instance of DB exists for a specific
@@ -444,10 +487,12 @@ private:
     /// \throw FileFormatUpgradeRequired if \a DBOptions::allow_upgrade
     /// is `false` and an upgrade is required.
     ///
+    /// \throw LogicError if both DBOptions::allow_upgrade and is_immutable is true.
     /// \throw UnsupportedFileFormatVersion if the file format version or
     /// history schema version is one which this version of Realm does not know
     /// how to migrate from.
     void open(const std::string& file, bool no_create = false, const DBOptions options = DBOptions());
+    void open(BinaryData, bool take_ownership = true);
 
     /// Open this group in replication mode. The specified Replication instance
     /// must remain in existence for as long as the DB.
@@ -565,7 +610,7 @@ public:
     void end_read();
 
     // Live transactions state changes, often taking an observer functor:
-    DB::version_type commit_and_continue_as_read();
+    VersionID commit_and_continue_as_read();
     template <class O>
     void rollback_and_continue_as_read(O* observer);
     void rollback_and_continue_as_read()
@@ -589,7 +634,10 @@ public:
     }
     TransactionRef freeze();
     // Frozen transactions are created by freeze() or DB::start_frozen()
-    bool is_frozen() const noexcept override { return m_transact_stage == DB::transact_Frozen; }
+    bool is_frozen() const noexcept override
+    {
+        return m_transact_stage == DB::transact_Frozen;
+    }
     TransactionRef duplicate();
 
     _impl::History* get_history() const;
@@ -598,9 +646,13 @@ public:
     Obj import_copy_of(const Obj& original);
     TableRef import_copy_of(const ConstTableRef original);
     LnkLst import_copy_of(const LnkLst& original);
+    LnkSet import_copy_of(const LnkSet& original);
     LstBasePtr import_copy_of(const LstBase& original);
+    SetBasePtr import_copy_of(const SetBase& original);
     CollectionBasePtr import_copy_of(const CollectionBase& original);
     LnkLstPtr import_copy_of(const LnkLstPtr& original);
+    LnkSetPtr import_copy_of(const LnkSetPtr& original);
+    LinkCollectionPtr import_copy_of(const LinkCollectionPtr& original);
 
     // handover of the heavier Query and TableView
     std::unique_ptr<Query> import_copy_of(Query&, PayloadPolicy);
@@ -684,9 +736,7 @@ public:
     {
     }
 
-    ~ReadTransaction() noexcept
-    {
-    }
+    ~ReadTransaction() noexcept {}
 
     operator Transaction&()
     {
@@ -731,9 +781,7 @@ public:
     {
     }
 
-    ~WriteTransaction() noexcept
-    {
-    }
+    ~WriteTransaction() noexcept {}
 
     operator Transaction&()
     {
@@ -804,7 +852,7 @@ struct DB::BadVersion : std::exception {
 
 inline bool DB::is_attached() const noexcept
 {
-    return m_file_map.is_attached();
+    return bool(m_fake_read_lock_if_immutable) || m_file_map.is_attached();
 }
 
 inline DB::TransactStage Transaction::get_transact_stage() const noexcept
@@ -815,14 +863,14 @@ inline DB::TransactStage Transaction::get_transact_stage() const noexcept
 class DB::ReadLockGuard {
 public:
     ReadLockGuard(DB& shared_group, ReadLockInfo& read_lock) noexcept
-        : m_shared_group(shared_group)
+        : m_db(shared_group)
         , m_read_lock(&read_lock)
     {
     }
     ~ReadLockGuard() noexcept
     {
         if (m_read_lock)
-            m_shared_group.release_read_lock(*m_read_lock);
+            m_db.release_read_lock(*m_read_lock);
     }
     void release() noexcept
     {
@@ -830,7 +878,7 @@ public:
     }
 
 private:
-    DB& m_shared_group;
+    DB& m_db;
     ReadLockInfo* m_read_lock;
 };
 
@@ -871,12 +919,13 @@ inline bool Transaction::promote_to_write(O* observer, bool nonblocking)
         if (!repl)
             throw LogicError(LogicError::no_history);
 
-        VersionID version = VersionID();                                              // Latest
+        VersionID version = VersionID(); // Latest
         m_history = repl->_get_history_write();
         bool history_updated = internal_advance_read(observer, version, *m_history, true); // Throws
 
         REALM_ASSERT(repl); // Presence of `repl` follows from the presence of `hist`
         DB::version_type current_version = m_read_lock.m_version;
+        m_alloc.init_mapping_management(current_version);
         repl->initiate_transact(*this, current_version, history_updated); // Throws
 
         // If the group has no top array (top_ref == 0), create a new node
@@ -907,7 +956,7 @@ inline void Transaction::rollback_and_continue_as_read(O* observer)
 
     BinaryData uncommitted_changes = repl->get_uncommitted_changes();
 
-    // FIXME: We are currently creating two transaction log parsers, one here,
+    // Possible optimization: We are currently creating two transaction log parsers, one here,
     // and one in advance_transact(). That is wasteful as the parser creation is
     // expensive.
     _impl::SimpleInputStream in(uncommitted_changes.data(), uncommitted_changes.size());

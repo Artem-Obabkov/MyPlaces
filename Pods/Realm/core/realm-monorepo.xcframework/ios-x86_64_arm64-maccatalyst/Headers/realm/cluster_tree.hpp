@@ -58,6 +58,14 @@ public:
     {
         return m_size;
     }
+
+    size_t nb_columns() const
+    {
+        return m_root->nb_columns();
+    }
+
+    static size_t size_from_ref(ref_type, Allocator& alloc);
+
     void destroy()
     {
         m_root->destroy_deep();
@@ -74,6 +82,10 @@ public:
     MemRef ensure_writeable(ObjKey k)
     {
         return m_root->ensure_writeable(k);
+    }
+    void update_ref_in_parent(ObjKey k, ref_type ref)
+    {
+        m_root->update_ref_in_parent(k, ref);
     }
     Array& get_fields_accessor(Array& fallback, MemRef mem) const
     {
@@ -128,7 +140,7 @@ public:
     // Lookup by index
     ClusterNode::State get(size_t ndx, ObjKey& k) const;
     // Get logical index of object identified by k
-    size_t get_ndx(ObjKey k) const;
+    size_t get_ndx(ObjKey k) const noexcept;
     // Find the leaf containing the requested object
     bool get_leaf(ObjKey key, ClusterNode::IteratorState& state) const noexcept;
     // Visit all leaves and call the supplied function. Stop when function returns true.
@@ -142,7 +154,7 @@ public:
     virtual void cleanup_key(ObjKey k) = 0;
     virtual void set_spec(ArrayPayload& arr, ColKey::Idx col_ndx) const = 0;
     virtual bool is_string_enum_type(ColKey::Idx col_ndx) const = 0;
-    virtual const Table* get_owning_table() const = 0;
+    virtual const Table* get_owning_table() const noexcept = 0;
     virtual std::unique_ptr<ClusterNode> get_root_from_parent() = 0;
 
     void dump_objects()
@@ -183,7 +195,8 @@ public:
         return *this;
     }
 
-    ObjKey go(size_t n);
+    // Set the iterator to the given absolute position in the table.
+    void go(size_t abs_pos);
     bool update() const;
     // Advance the iterator to the next object in the table. This also holds if the object
     // pointed to is deleted. That is - you will get the same result of advancing no matter
@@ -192,10 +205,6 @@ public:
 
     Iterator& operator+=(ptrdiff_t adj);
 
-    Iterator operator+(ptrdiff_t adj)
-    {
-        return Iterator(m_tree, get_position() + adj);
-    }
     bool operator==(const Iterator& rhs) const
     {
         return m_key == rhs.m_key;

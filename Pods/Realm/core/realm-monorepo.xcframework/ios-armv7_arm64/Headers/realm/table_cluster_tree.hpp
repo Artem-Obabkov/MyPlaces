@@ -49,7 +49,7 @@ public:
     void enumerate_string_column(ColKey col_key);
 
     // Specialization of ClusterTree interface
-    const Table* get_owning_table() const override
+    const Table* get_owning_table() const noexcept override
     {
         return m_owner;
     }
@@ -90,8 +90,6 @@ public:
     // If the object pointed to by the iterator is deleted, you will get an exception if
     // you try to dereference the iterator before advancing it.
 
-    // Random access relative to iterator position.
-    reference operator[](size_t n);
     reference operator*() const
     {
         return *operator->();
